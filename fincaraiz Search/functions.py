@@ -1,6 +1,24 @@
 from imports import *
 from constants import *
 
+def choose_rent_buy_projects(driver, choice):
+    try:
+        # On récupère les labels cliquables
+        radio_buttons = driver.find_elements(By.CSS_SELECTOR, ".ant-radio-button-wrapper")
+
+        for button in radio_buttons:
+            # On extrait le texte dans le span de texte
+            text = button.find_elements(By.TAG_NAME, "span")[-1].text.strip()
+
+            print(f"Option trouvée : {text}")
+
+            if text.lower() == choice.lower():
+                button.click()
+                print(f">> '{text}' sélectionné.")
+                break
+
+    except Exception as e:
+        print(f"Erreur : {str(e)}")
 
 def remove_unwanted_elements(driver, selectors, timeout=3):
     """
@@ -12,7 +30,7 @@ def remove_unwanted_elements(driver, selectors, timeout=3):
     """
     try:
         # Attendre que tous les éléments soient présents dans le délai global
-        wait(driver, timeout).until(
+        WebDriverWait(driver, timeout).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, ', '.join(selectors)))
         )
 
@@ -32,7 +50,6 @@ def remove_unwanted_elements(driver, selectors, timeout=3):
     except Exception as e:
         print(f"Erreur lors de la suppression des éléments : {e}")
 
-
 def login(driver, email, password):
     # Cliquer sur le bouton de login
     try:
@@ -42,7 +59,7 @@ def login(driver, email, password):
         time.sleep(3)
 
         # Attendre que le bouton devienne cliquable (jusqu'à 10 secondes)
-        login_button = wait(driver, 10).until(
+        login_button = WebDriverWait(driver=driver, timeout=3).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn-secondary"))
         )
 
@@ -70,7 +87,7 @@ def login(driver, email, password):
 def fermer_fenetre_modal(driver, timeout=5):
     try:
         # Attendre que le bouton de fermeture soit cliquable
-        close_button = wait(driver, timeout).until(
+        close_button = WebDriverWait(driver, timeout).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "button.close-button"))
         )
         close_button.click()
@@ -210,39 +227,54 @@ def search(driver, list_real_estate_type, location):
     except Exception as e:
         print(f"Erreur lors de la recherche :\n{e}")
 
-
 def select_real_estate_types(driver, real_estate_types):
-    """
-    Sélectionne les types immobiliers dans une liste déroulante sur le site.
-    
-    Args:
-    - driver : WebDriver Selenium
-    - real_estate_types : Liste des types immobiliers à sélectionner
-    
-    Retourne : None
-    """
     try:
-        # Cliquer sur la zone de sélection
-        select_area = driver.find_element(By.CSS_SELECTOR, ".ant-select-selector")
-        clear_ant_select_choices(driver)  # Si vous avez cette fonction définie ailleurs
-        select_area.click()
-        
-        # Attendre que la liste des choix soit visible
-        choices = WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, "ant-select-item-option-content"))
+        # Ouvrir le dropdown
+        driver.find_element(By.CSS_SELECTOR, ".ant-select-selector").click()
+
+        # Attendre que toutes les options soient visibles
+        options = WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "ant-select-item-option"))
         )
-        
-        # Itérer sur les choix et cliquer sur ceux qui correspondent à un type immobilier
-        for choice in choices:
+
+        # On désélectionne uniquement ce qui est sélectionné mais qu'on ne veut pas
+        for opt in options:
+            text = opt.text.strip().lower()
+            is_selected = "ant-select-item-option-selected" in opt.get_attribute("class")
+            should_be_selected = any(q.lower() in text for q in real_estate_types)
+
+            if is_selected and not should_be_selected:
+                driver.execute_script("arguments[0].click();", opt)
+                print(f"❌ Désélectionné : {opt.text.strip()}")
+
+        # Ensuite on sélectionne ce qu'on veut, seulement si pas déjà sélectionné
+        for opt in options:
+            text = opt.text.strip().lower()
+            is_selected = "ant-select-item-option-selected" in opt.get_attribute("class")
+
             for query in real_estate_types:
-                if query.lower() in choice.text.lower():
-                    choice.click()
-                    break  # Une fois cliqué, on passe à l'option suivante
-        
-        print("Tous les types immobiliers sélectionnés.")
+                if query.lower() in text and not is_selected:
+                    driver.execute_script("arguments[0].click();", opt)
+                    print(f"✅ Sélectionné : {opt.text.strip()}")
+                    break
+
+        # Vérif finale : on ajuste au cas où
+        for opt in options:
+            text = opt.text.strip().lower()
+            is_selected = "ant-select-item-option-selected" in opt.get_attribute("class")
+            should_be_selected = any(q.lower() in text for q in real_estate_types)
+
+            if is_selected and not should_be_selected:
+                driver.execute_script("arguments[0].click();", opt)
+                print(f"❌ Corrigé (désélection) : {opt.text.strip()}")
+            elif not is_selected and should_be_selected:
+                driver.execute_script("arguments[0].click();", opt)
+                print(f"✅ Corrigé (sélection) : {opt.text.strip()}")
+
+        print("🎯 Sélection vérifiée et corrigée.")
 
     except Exception as e:
-        print(f"Erreur lors de la sélection des types immobiliers :\n{str(e)}")
+        print(f"💥 Erreur : {str(e)}")
 
 
 
