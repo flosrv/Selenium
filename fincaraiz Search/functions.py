@@ -211,7 +211,38 @@ def search(driver, list_real_estate_type, location):
         print(f"Erreur lors de la recherche :\n{e}")
 
 
+def select_real_estate_types(driver, real_estate_types):
+    """
+    Sélectionne les types immobiliers dans une liste déroulante sur le site.
+    
+    Args:
+    - driver : WebDriver Selenium
+    - real_estate_types : Liste des types immobiliers à sélectionner
+    
+    Retourne : None
+    """
+    try:
+        # Cliquer sur la zone de sélection
+        select_area = driver.find_element(By.CSS_SELECTOR, ".ant-select-selector")
+        clear_ant_select_choices(driver)  # Si vous avez cette fonction définie ailleurs
+        select_area.click()
+        
+        # Attendre que la liste des choix soit visible
+        choices = WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "ant-select-item-option-content"))
+        )
+        
+        # Itérer sur les choix et cliquer sur ceux qui correspondent à un type immobilier
+        for choice in choices:
+            for query in real_estate_types:
+                if query.lower() in choice.text.lower():
+                    choice.click()
+                    break  # Une fois cliqué, on passe à l'option suivante
+        
+        print("Tous les types immobiliers sélectionnés.")
 
+    except Exception as e:
+        print(f"Erreur lors de la sélection des types immobiliers :\n{str(e)}")
 
 
 
