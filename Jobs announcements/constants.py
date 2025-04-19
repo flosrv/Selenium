@@ -9,9 +9,9 @@ today = dt.today()
 web_search_url = None
 location_searched = None
 job_wanted = None
-
-
-
+list_url = []
+list_offers = []
+count_salaries = 0
 
 
 

@@ -1,11 +1,12 @@
 from imports import *
 from constants import *
 
-def close_banner(driver, timeout=5):
+def close_banner(driver, timeout=3):
     try:
         # 1. Attente du popup par ID
         popup = WebDriverWait(driver, timeout).until(
-            EC.presence_of_element_located((By.ID, "pop-up-webpush-sub"))
+            EC.presence_of_element_located((By.ID, 
+                            "pop-up-webpush-sub"))
         )
         close_button = WebDriverWait(popup, timeout).until(
             EC.element_to_be_clickable((By.XPATH, ".//button[2]"))
@@ -44,6 +45,25 @@ def close_banner(driver, timeout=5):
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     time.sleep(1)
 
+def close_overlay(driver, timeout=3):
+    try:
+        # Vérifier l'existence de l'overlay dans un délai de 5 secondes
+        WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '.overlay, #pop-up-webpush-background'))
+        )
+        # 1. Supprimer tous les overlays en JS
+        driver.execute_script("""
+            const overlays = document.querySelectorAll('.overlay, #pop-up-webpush-background');
+            overlays.forEach(overlay => {
+                overlay.style.display = 'none';  // Masquer l'overlay
+                overlay.remove();  // Supprimer complètement l'élément du DOM
+            });
+        """)
+        time.sleep(1)  # Temps pour vérifier que l'overlay a disparu
+        print("Overlay supprimé avec succès")
+    except Exception as e:
+        print(f"Aucun overlay trouvé ou erreur lors de la suppression : {e}")
+
 def search_for_jobs(driver, keywords, location=None):
     driver.get(website_path)
     close_banner(driver)
@@ -65,25 +85,6 @@ def search_for_jobs(driver, keywords, location=None):
     close_banner(driver)
     close_overlay(driver)
     
-def close_overlay(driver, timeout=5):
-    try:
-        # Vérifier l'existence de l'overlay dans un délai de 5 secondes
-        WebDriverWait(driver, timeout).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, '.overlay, #pop-up-webpush-background'))
-        )
-        # 1. Supprimer tous les overlays en JS
-        driver.execute_script("""
-            const overlays = document.querySelectorAll('.overlay, #pop-up-webpush-background');
-            overlays.forEach(overlay => {
-                overlay.style.display = 'none';  // Masquer l'overlay
-                overlay.remove();  // Supprimer complètement l'élément du DOM
-            });
-        """)
-        time.sleep(1)  # Temps pour vérifier que l'overlay a disparu
-        print("Overlay supprimé avec succès")
-    except Exception as e:
-        print(f"Aucun overlay trouvé ou erreur lors de la suppression : {e}")
-
 def create_driver():
     options = Options()
     driver = webdriver.Chrome(options=options)
@@ -122,10 +123,41 @@ def login(driver, email, password):
     except Exception as e:
        print(f"Erreur lors de la connexion :\n{e}")
 
+def go_to_next_page_with_siguiente(driver):
+    try:
+        # Attendre que le bouton "Siguiente" soit visible et cliquable
+        siguiente = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//span[@title='Siguiente']"))
+        )
+        
+        # Si le bouton "Siguiente" est affiché et cliquable
+        if siguiente.is_displayed() and siguiente.is_enabled():
+            print("Bouton 'Siguiente' trouvé, clic sur le bouton")
+            siguiente.click()
+            close_banner(driver)
+            close_overlay(driver)
+            return True
+        else:
+            print("Bouton 'Siguiente' non cliquable ou absent")
+            return False
 
+    except Exception as e:
+        return False
 
-
-
+def find_offers_div(driver):
+        # Cherche le conteneur principal des offres
+        offers_container = driver.find_element(By.ID, "offersGridOfferContainer")
+        if offers_container:
+            # Cherche tous les articles dont l'ID commence par quelque chose (à préciser si besoin)
+            offers = offers_container.find_elements(By.XPATH, ".//article[starts-with(@id, '')]")
+            
+            if offers:
+                print(f"{len(offers)} offres trouvées.")
+                return offers
+            else:
+                print("Aucune offre trouvée dans le conteneur.")
+        else:
+            print("Conteneur 'offersGridOfferContainer' introuvable.")
 
 
 
