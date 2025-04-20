@@ -9,6 +9,6 @@ from selenium.common.exceptions import JavascriptException, ElementClickIntercep
 from selenium.webdriver.common.action_chains import ActionChains
 import time,json, dataclasses
 from typing import List, Optional
-import ulid, re, time
+import ulid, re, time, random
 from datetime import datetime as dt, timedelta
 
