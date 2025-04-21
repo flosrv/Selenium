@@ -11,7 +11,7 @@ from typing import List, Optional
 import ulid, re, time, random, imaplib, email, base64, time,json, dataclasses, re, os
 from datetime import datetime as dt, timedelta
 from unidecode import unidecode
-
+from deep_translator import GoogleTranslator
 
 
 
