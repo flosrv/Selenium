@@ -5,18 +5,26 @@ def back_to_home(driver):
     driver.get(website_url)
     print("Retour à la page d'accueil...")
 
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import time
+
 def create_driver():
+    
+    # Initialisation des options pour le driver
     options = Options()
     driver = webdriver.Chrome(options=options)
     driver.implicitly_wait(2)
     driver.maximize_window()
+    
+    # Ouverture de la page web
     driver.get(website_url)
 
     # Scroll jusqu'en bas de la page
     last_height = driver.execute_script("return document.body.scrollHeight")
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time_sleep()
+        time.sleep(2)  # Ajout d'un délai pour laisser la page se charger
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
             break
@@ -24,8 +32,9 @@ def create_driver():
 
     # Revenir en haut
     driver.execute_script("window.scrollTo(0, 0);")
-
+    
     return driver
+
 
 def time_sleep():
     time.sleep(random.uniform(1,3))
