@@ -1,6 +1,8 @@
 from imports import *
 from constants import *
 
+
+
 def back_to_home(driver):
     driver.get(website_url)
     print("Retour à la page d'accueil...")
@@ -73,7 +75,23 @@ def time_sleep(page=1, action="default", page_type="listing"):
     else:
         sleep(wait_time)
 
+def filter_products_img_urls(img_urls):
+    """
+    Filtre une liste d'URLs d'images pour ne garder que celles qui contiennent **tous** les termes définis dans 'list_accepted_terms'.
+    """
+    list_accepted_terms = ["vtexassets", "arquivos", "ids", "v="]
+    
+    # Filtrer et garder uniquement les URLs qui contiennent **tous** les termes nécessaires
+    filtered_urls = [url for url in img_urls if all(term in url for term in list_accepted_terms)]
+    
+    return filtered_urls
 
+def normalize_text(text):
+    # Supprimer les sauts de ligne et les espaces inutiles
+    text = text.replace("\n", " ")  # Remplacer les sauts de ligne par un espace
+    text = re.sub(r'\s+', ' ', text)  # Remplacer les espaces multiples par un seul espace
+    text = text.strip()  # Supprimer les espaces en début et fin de texte
+    return text
 
 def find_child_elements(element):
     children = element.find_elements(By.XPATH,"*/.." )
@@ -184,6 +202,7 @@ def get_discount_percentage(last_price, actual_price):
         return discount
     except (ValueError, ZeroDivisionError):
         return None
+
 
 # def translate(query):
 #     # Traduire la requête directement en espagnol
