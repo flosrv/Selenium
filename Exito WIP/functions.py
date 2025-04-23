@@ -203,6 +203,34 @@ def get_discount_percentage(last_price, actual_price):
     except (ValueError, ZeroDivisionError):
         return None
 
+def destroy_intrusive_elements(driver):
+    selectors = [
+        '*[class*="popup"]',
+        '*[id*="popup"]',
+        '*[class*="modal"]',
+        '*[id*="modal"]',
+        '*[class*="overlay"]',
+        '*[id*="overlay"]',
+        '*[class*="cookie"]',
+        '*[id*="cookie"]',
+        '*[class*="banner"]',
+        '*[id*="banner"]',
+        '*[class*="ads"]',
+        '*[id*="ads"]',
+        'iframe',
+        'div[role="dialog"]'
+    ]
+    
+    for selector in selectors:
+        try:
+            elements = driver.find_elements(By.CSS_SELECTOR, selector)
+            for el in elements:
+                driver.execute_script("arguments[0].remove();", el)
+        except Exception:
+            pass  # Ignore all exceptions, on ne veut rien savoir
+
+
+
 
 # def translate(query):
 #     # Traduire la requête directement en espagnol
