@@ -140,3 +140,8 @@ def translate(query):
     return translated_text
 
 
+def process_string(query):
+    query = query.lower().strip()
+    query = unidecode(query)
+    query = GoogleTranslator(source='auto', target='es').translate(query)
+    return query
