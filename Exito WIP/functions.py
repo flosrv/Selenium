@@ -7,14 +7,18 @@ def back_to_home(driver):
     driver.get(website_url)
     print("Retour à la page d'accueil...")
 
-def create_driver():
-    
+def create_driver(website_url):
     # Initialisation des options pour le driver
     options = Options()
+    options.add_argument("--log-level=3")  # Désactive les logs inutiles de WebDriver
+
+    # Initialisation du driver avec les options
     driver = webdriver.Chrome(options=options)
+
+    # Temps d'attente implicite
     driver.implicitly_wait(2)
     driver.maximize_window()
-    
+
     # Ouverture de la page web
     driver.get(website_url)
 
@@ -22,7 +26,6 @@ def create_driver():
     last_height = driver.execute_script("return document.body.scrollHeight")
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(2)  # Ajout d'un délai pour laisser la page se charger
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
             break
@@ -117,6 +120,7 @@ def click_with_JS(element, driver):
 def find_element(driver, criteria, element):
     try:
         criteria = criteria.strip().lower()
+        wait = WebDriverWait(driver, 10)
         
         by_map = {
             'id': By.ID,
@@ -131,17 +135,19 @@ def find_element(driver, criteria, element):
 
         if criteria not in by_map:
             raise ValueError(f"[find_element] Critère non reconnu : '{criteria}'")
-
-        return driver.find_element(by_map[criteria], element)
+        element = wait.until(EC.presence_of_element_located((by_map[criteria], element)))
+        return element
+    
     except NoSuchElementException as e:
         print(f"Erreur : {e}")
     except Exception as e:
         print(str(e))
 
-def find_elements(driver, criteria, element):
+def find_elements(driver_or_element, criteria, selector):
     try:
         criteria = criteria.strip().lower()
-        
+        wait = WebDriverWait(driver_or_element, 10)
+
         by_map = {
             'id': By.ID,
             'name': By.NAME,
@@ -156,12 +162,16 @@ def find_elements(driver, criteria, element):
         if criteria not in by_map:
             raise ValueError(f"[find_elements] Critère non reconnu : '{criteria}'")
 
-        return driver.find_elements(by_map[criteria], element)
-    except NoSuchElementException as e:
-        print(f"Erreur : {e}")
-    except Exception as e:
-        print(str(e))
+        # Attente de présence d'au moins un élément
+        wait.until(EC.presence_of_element_located((by_map[criteria], selector)))
 
+        # Récupération de tous les éléments correspondants
+        elements = driver_or_element.find_elements(by_map[criteria], selector)
+        return elements if elements else []
+
+    except Exception as e:
+        print(f"❌ find_elements error : {e}")
+        return []
 def smooth_move_to_element(driver, element):
     actions = ActionChains(driver)
 
@@ -188,7 +198,6 @@ def smooth_move_to_element(driver, element):
         actions.perform()
         time.sleep(0.05)  # Petite pause pour rendre le mouvement plus naturel
 
-
 def get_discount_percentage(last_price, actual_price):
     try:
         # Nettoyer les prix : supprimer le symbole $ et les espaces
@@ -197,7 +206,6 @@ def get_discount_percentage(last_price, actual_price):
 
         # Calcul de la réduction
         discount = round((1 - (current / last)) * 100)
-        discount = f"{discount}%"
         # Retour sous forme de string formatée
         return discount
     except (ValueError, ZeroDivisionError):
@@ -229,7 +237,40 @@ def destroy_intrusive_elements(driver):
         except Exception:
             pass  # Ignore all exceptions, on ne veut rien savoir
 
+def print_with_timestamp(message):
+    now = dt.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{now} - {message}")
 
+def wait_page_to_load(driver):
+    WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script('return document.readyState') == 'complete'
+    )
+    print("Page completely loaded!")
+
+def safe_get_text(parent, xpath, key=None, book_details=None, label=None, attr=None, timeout=10):
+    try:
+        # Attente explicite de l'élément
+        el = WebDriverWait(parent, timeout).until(
+            EC.visibility_of_element_located((By.XPATH, xpath))
+        )
+        
+        # Extraire la valeur
+        val = el.get_attribute(attr).strip() if attr else el.text.strip()
+        
+        # Ajouter au dictionnaire si nécessaire
+        if book_details is not None and key:
+            book_details[key] = val
+        
+        # Affichage du label si nécessaire
+        if label:
+            print(f"{label}: {val}")
+        
+        return val
+    except Exception as e:
+        # Gestion des erreurs et affichage
+        if label:
+            print(f"❌ Erreur sur {label} :\n{str(e)}")
+        return None
 
 
 # def translate(query):

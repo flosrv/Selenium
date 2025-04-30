@@ -1,6 +1,7 @@
 from imports import *
 from constants import *
 
+
 def back_to_home(driver):
     driver.get(website_url)
     print("Retour à la page d'accueil...")
@@ -152,8 +153,6 @@ def process_string(query):
     query = unidecode(query)
     query = GoogleTranslator(source='auto', target='es').translate(query)
     return query
-
-
 
 def wait_page_to_load(driver):
     WebDriverWait(driver, 10).until(
